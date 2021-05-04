@@ -1,5 +1,4 @@
-from youtubesearchpython.__future__ import *
-import asyncio
+from youtubesearchpython import *
 import youtube_dl
 
 def do_stuff(video_count, list1):
@@ -41,7 +40,7 @@ def do_stuff(video_count, list1):
 
 
 #main function
-async def main():
+def main():
 
 
 	#gets URL of playlist from user
@@ -61,11 +60,11 @@ async def main():
 
 		list1 = []
 		#retrieves video count of playlist as int and saves it to video_count
-		playlist =	await Playlist.getInfo(video_playlist)
+		playlist = Playlist.getInfo(video_playlist)
 		video_count = int(playlist['videoCount'])
 
 		#gets urls of videos in playlist and saves to list
-		video = await Playlist.getVideos(video_playlist)
+		video = Playlist.getVideos(video_playlist)
 		for i in range(video_count):
 			try:
 				list1.append(video['videos'][i]['link'])
@@ -82,4 +81,4 @@ async def main():
 
 
 #run main function
-asyncio.run(main())
+main()
