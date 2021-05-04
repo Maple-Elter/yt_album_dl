@@ -71,10 +71,6 @@ def main():
 			except IndexError:
 				break
 
-		#for i in range(len(list1)):
-		#	new_var = list1[i]
-		#	print(new_var)
-
 		do_stuff(video_count, list1)
 
 
