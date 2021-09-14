@@ -63,7 +63,6 @@ def convert(list1, threads=0, thread_num=1):
 	  
 		#get full filename 
 		filename = clean_up_string(Video.get(i)['title'])
-		print(filename)
   
 		#ffmpeg options
 		cmd = ["ffmpeg", "-threads", f"{threads}", "-i", f"{filename}.webm", f"{filename}.mp3"]
