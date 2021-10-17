@@ -13,7 +13,6 @@ import spotify_webapi as sp
 from tkinter import Tk, StringVar, Label, ttk, IntVar
 
 #some tkinter variables
-root = Tk()
 progressbars = []
 progressbar_labels = []
 progressbar_labels_text = []
@@ -90,13 +89,15 @@ def convert(list1, threads=0, thread_num=1):
 			ff = FfmpegProgress(cmd)
 			for progress in ff.run_command_with_progress():
 					a(f"Converting Song {current_index} of {len(list1)}      {progress}%", thread_num - 1, progress)
+     
 		else: print(f"File: {filename}.mp3 already exists")
 		
+		#delete .webm file
 		if exists(f"{filename}.webm"):
-			#delete .webm file
 			remove(f"{filename}.webm")
 
 		current_index += 1
+  
 	print('                                                                   ', end='\r')
 	print(f"successfully closed thread {thread_num}")
 	a('Done', thread_num-1, 100)
@@ -189,6 +190,9 @@ def url_handler(video_url):
 			input("press enter key to exit...")
 			return
 
+	if 'music.youtube.com' in video_url:
+		video_url = 'https://www.' + video_url.split('music.')[1]
+
 	#if the url is from youtube
 	if 'youtube.com' in video_url or 'youtu.be' in video_url:
      
@@ -241,10 +245,17 @@ def url_handler(video_url):
 	if url_type == 1:
 
 		#gets urls of videos in playlist and saves to list
-		videos = Playlist.getVideos(video_url)['videos']
-		for i in videos:
+		videos = Playlist(video_url)
+
+		#retrives all videos in playlist
+		while videos.hasMoreVideos:
+			videos.getNextVideos()
+  
+		#gets the urls of videos and appends them to list
+		for i in videos.videos:
 			new_list.append(i['link'].split('&')[0])
    
+		#splits list of urls into equal size depending on number of threads program can use
 		list1 = split_string(new_list, num_of_threads)
   
 	#if single yt video
@@ -256,12 +267,12 @@ def url_handler(video_url):
 		pl = sp.Playlist(video_url)
 		playlist_tracks = []
 
-
+		#searches for song from spotify on youtube and appends it to url list
 		for i in pl.tracks:
 			search_result = VideosSearch((i.title + ' '  + i.artist + ' ' + pl.title), limit=5).result()['result']
 			j = 0
 			while True:
-				if 'video' not in search_result[j]['title']:
+				if 'official music video' not in search_result[j]['title'] and 'official video' not in search_result[j]['title']:
 					new_list.append(search_result[j]['link'])
 					j += 1
 					break
@@ -269,6 +280,7 @@ def url_handler(video_url):
 
 	#if single spotify track
 	elif url_type == 4:
+		#searches for spotify song on youtube
 		tr = sp.Track(video_url)
 		search_result = VideosSearch((tr.title + ' ' + tr.artist), limit=5).result()['result']
 		for i in range(5):
@@ -276,7 +288,9 @@ def url_handler(video_url):
 				list1.append(search_result[i]['link'])
 				break
 
+	#starts download threads
 	thread_controller(list1)
+      
       
 #driver code
 if __name__ == "__main__":
@@ -295,9 +309,13 @@ if __name__ == "__main__":
 		#-t option for custom amount of threads
 		if '-t' in argv:
 			if not argv[argv.index('-t') + 1][0] == '-':
-				num_of_threads = argv[argv.index('-t') + 1]
+				num_of_threads = int(argv[argv.index('-t') + 1])
     
-
+		#sets root window
+		root = Tk()
+		root.title('YTAlbumDL')
+  
+  
 		#creates tk widgets based on number of threads
 		for i in range(num_of_threads):
 			progressbars_progress.append(IntVar(root))
@@ -310,7 +328,7 @@ if __name__ == "__main__":
 			progressbar_labels[i].pack()
 			progressbars[i].pack()
 
-		#runs download code
+		#starts downloading
 		thread = Thread(target=url_handler, args=(video_url,))
 		thread.daemon = True
 		thread.start()
@@ -320,4 +338,3 @@ if __name__ == "__main__":
   
 	except Exception as e:
 		raise Exception(e)
-		#input("press enter key to exit...")
